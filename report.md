@@ -125,6 +125,52 @@ for idx in r_old.keys():
 ```
 
 ### 条带分块算法
+条带分块算法在基础分块算法上对内存占用进行了进一步的优化。该算法将原有的稀疏矩阵拆分成若干块，每一块只保留目的节点为当前分块中节点的有向边信息。这样，在每次更新某一块分数列表时，只需遍历相应的条带矩阵即可完成分数的更新，避免每次更新时都要完整的读一遍稀疏矩阵，减少了内存占用。
+
+条带分块算法的更新部分与基础分块算法相同，主要改进部分在于稀疏矩阵的分块。我们只需要遍历原稀疏矩阵的每一条记录，
+并根据目的节点索引值将每条记录拆分成多条记录分别置于各个块中即可。主要实现代码如下：
+```python
+ node = list(map(int,line.split(" ")))
+ node_num = node[0]      #源节点
+ node_degree = node[1]   #节点的出度
+ node_dest = node[2:]    #目的节点列表
+
+ #根据块大小限定目的节点范围，将一条记录拆分成多条记录存到对应块中
+ idx = 0
+ block_end_num = nodes[min(idx+block_size,len(nodes)-1)]
+ stripe_node_dest = []
+ i = 0
+ while i < len(node_dest):
+     dest = node_dest[i]
+     if dest < block_end_num:
+         stripe_node_dest.append(dest)
+         i+=1
+     else:
+         if len(stripe_node_dest)>0:
+             stripe_matrix[idx].append([node_num, node_degree]+stripe_node_dest)
+             stripe_node_dest.clear()
+         idx+=1
+         if idx*block_size>len(nodes)-1:
+             stripe_node_dest = []
+             break
+         block_end_num = nodes[min(idx*block_size+block_size,len(nodes)-1)]
+
+ if len(stripe_node_dest) > 0:
+     stripe_matrix[idx].append([node_num, node_degree] + stripe_node_dest)
+     stripe_node_dest.clear()
+ idx = 0
+```
+运行后会在stripe_matrix文件夹下生成各分块矩阵的文本文件，如下图所示：
+![img.png](stripe_matrix_file.png)
+在进行pagerank迭代前，按照不同的分数列表分块读入对应的分块矩阵即可，具体代码如下：
+```python
+ # 基础分块算法读入稀疏矩阵
+ with open(sparse_matrix, 'r') as mfile, open(r1, 'r') as old_rfile:
+
+ # 条带分块算法读入分块矩阵
+ stripe_matrix = stripe_matrix_dir + f"stripe_matrix_{bsize}_{j}.txt"
+ with open(stripe_matrix, 'r') as mfile, open(r1, 'r') as old_rfile:
+```
 
 ## 实验结果及分析
 
@@ -140,6 +186,6 @@ for idx in r_old.keys():
 | :--: | -----------: | -------: | -------: | -------: |
 |  BA  |         6263 |          |  4723532 |   281835 |
 | BBUA |         1000 |          | 31135720 |   281835 |
-| BSUA |              |          |          |          |
+| BSUA |         1000 |          |  6772524 |   281835 |
 
 …………

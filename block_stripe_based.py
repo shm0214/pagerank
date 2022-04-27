@@ -12,21 +12,20 @@ def get_stripe_sparse_matrix(edges_file,matrix_file,block_size):
     id2idx = {}
     for idx, id in enumerate(nodes):
         id2idx[id] = idx
-
     nodes_num = len(nodes)
-    # print("nodes_num",len(nodes))
+
     stripe_matrix = [list() for _ in range((nodes_num//block_size)+1)]
 
-    # print(len(stripe_matrix))
     with open(matrix_file,"r") as file:
         for line in file:
             node = list(map(int,line.split(" ")))
-            node_num = node[0]
-            node_degree = node[1]
-            node_dest = node[2:]
+            node_num = node[0]      #源节点
+            node_degree = node[1]   #节点的出度
+            node_dest = node[2:]    #目的节点列表
+
+            #根据块大小限定目的节点范围，将一条记录拆分成多条记录存到对应块中
             idx = 0
             block_end_num = nodes[min(idx+block_size,len(nodes)-1)]
-
             stripe_node_dest = []
             i = 0
             while i < len(node_dest):
@@ -48,7 +47,7 @@ def get_stripe_sparse_matrix(edges_file,matrix_file,block_size):
                 stripe_matrix[idx].append([node_num, node_degree] + stripe_node_dest)
                 stripe_node_dest.clear()
             idx = 0
-
+    #将分块矩阵分别按照分块写到不同文件中
     for i,block in enumerate(stripe_matrix):
         stripe_matrix_filename = f"stripe_matrix/stripe_matrix_{block_size}_{i}.txt"
         with open(stripe_matrix_filename,"w") as file:
