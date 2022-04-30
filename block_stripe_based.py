@@ -1,5 +1,6 @@
 from base import *
 from block_based import block_based_pagerank
+import os
 
 def get_stripe_sparse_matrix(edges_file,matrix_file,block_size):
     """
@@ -182,6 +183,8 @@ def block_stripe_based_pagerank(edges,sparse_matrix, stripe_matrix_dir, r1, r2, 
 if __name__ == "__main__":
     # networkx_pagerank('data.txt')
     # igraph_pagerank('data.txt')
+    if not os.path.exists('stripe_matrix'):
+        os.makedirs('stripe_matrix')
     base_pagerank('data.txt', 'data_sparse.txt', 'r.txt', 0.85, 1e-6)
     block_based_pagerank('data.txt', 'data_sparse.txt', 'r1.txt', 'r2.txt', 0.85, 1e-6, 1000)
     block_stripe_based_pagerank('data.txt','data_sparse.txt','stripe_matrix/', 'r1.txt', 'r2.txt', 0.85, 1e-6, 1000)

@@ -1,5 +1,6 @@
 import time
 
+
 def networkx_pagerank(file):
     import networkx as nx
     G = nx.DiGraph()
@@ -48,6 +49,7 @@ def get_sparse_matrix(file, sparse_matrix):
             for to in tos:
                 nodes.add(to)
     return sorted(nodes)
+
 
 def base_pagerank(edges, sparse_matrix, r_old, beta, epsilon):
     '''
